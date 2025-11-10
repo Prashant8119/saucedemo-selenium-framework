@@ -59,6 +59,7 @@ public class BaseTest {
         test.log(Status.INFO, "Opening browser: " + browser);
 
         switch (browser) {
+        /*
             case "chrome":
                 WebDriverManager.chromedriver().setup();
                 ChromeOptions chromeOptions = new ChromeOptions();
@@ -69,6 +70,29 @@ public class BaseTest {
                 chromeOptions.addArguments("--start-maximized");
                 driver = new ChromeDriver(chromeOptions);
                 break;
+                */
+        case "chrome":
+            WebDriverManager.chromedriver().setup();
+            ChromeOptions chromeOptions = new ChromeOptions();
+
+            // Always add these for Jenkins (headless environment)
+            chromeOptions.addArguments("--no-sandbox");
+            chromeOptions.addArguments("--disable-dev-shm-usage");
+            chromeOptions.addArguments("--disable-gpu");
+            chromeOptions.addArguments("--window-size=1920,1080");
+
+            // Run headless mode automatically when running on Jenkins or CI
+            String headless = System.getenv("JENKINS_HOME") != null ? "true" : config.getProperty("headless", "false");
+            if (Boolean.parseBoolean(headless)) {
+                chromeOptions.addArguments("--headless=new");
+            }
+
+            chromeOptions.addArguments("--disable-notifications");
+            chromeOptions.addArguments("--start-maximized");
+
+            driver = new ChromeDriver(chromeOptions);
+            break;
+
 
             case "firefox":
                 WebDriverManager.firefoxdriver().setup();
