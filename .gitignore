@@ -1,0 +1,38 @@
+# Compiled class files
+*.class
+target/
+*.jar
+*.war
+*.ear
+
+# Eclipse specific files
+.classpath
+.project
+.settings/
+
+# IntelliJ IDEA specific files
+.idea/
+*.iml
+*.iws
+
+# Test outputs (reports are temporary)
+test-output/
+screenshots/
+reports/
+
+# Log files
+*.log
+
+# OS specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Build directories
+build/
+dist/
