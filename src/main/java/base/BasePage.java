@@ -27,11 +27,36 @@ public class BasePage {
 
     /**
      * Click on element after waiting for it to be clickable
-     */
+     
     protected void click(WebElement element) {
         wait.until(ExpectedConditions.elementToBeClickable(element));
         element.click();
     }
+    */
+    protected void click(WebElement element) {
+        try {
+            WebDriverWait localWait = new WebDriverWait(driver, Duration.ofSeconds(15));
+
+            // Ensure element is visible and clickable
+            localWait.until(ExpectedConditions.visibilityOf(element));
+            localWait.until(ExpectedConditions.elementToBeClickable(element));
+
+            element.click();
+            System.out.println("✅ Clicked element: " + element);
+        } catch (Exception e) {
+            System.out.println("⚠️ Element click failed, retrying with JS Click...");
+
+            // Fallback to JavaScript click if normal click fails
+            try {
+                ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+                System.out.println("✅ JS Click successful on: " + element);
+            } catch (Exception jsEx) {
+                System.out.println("❌ JS Click also failed for element: " + element);
+                throw jsEx;
+            }
+        }
+    }
+
 
     /**
      * Type text into element after waiting for visibility
