@@ -16,18 +16,11 @@ import utils.ScreenshotUtil;
 
 import java.time.Duration;
 
-/**
- * BaseTest class - Parent class for all Test classes
- * Contains setup, teardown, and reporting logic
- */
 public class BaseTest {
     protected WebDriver driver;
     protected ConfigReader config;
     protected ExtentTest test;
 
-    /**
-     * Suite level setup - Initialize Extent Reports
-     */
     @BeforeSuite
     public void setupSuite() {
         ExtentManager.createInstance();
@@ -36,63 +29,40 @@ public class BaseTest {
         System.out.println("========================================");
     }
 
-    /**
-     * Method level setup - Initialize WebDriver and open browser
-     */
     @BeforeMethod
     public void setUp(ITestResult result) {
-        // Load configuration
         config = ConfigReader.getInstance();
 
-        // Create test in Extent Report
         String testName = result.getMethod().getMethodName();
         String description = result.getMethod().getDescription();
         test = ExtentManager.getInstance().createTest(testName, description);
         ExtentManager.setTest(test);
 
-        // Log test start
         test.log(Status.INFO, "Test execution started: " + testName);
         System.out.println("\n▶ Starting Test: " + testName);
 
-        // Initialize WebDriver
         String browser = config.getBrowser().toLowerCase();
         test.log(Status.INFO, "Opening browser: " + browser);
 
         switch (browser) {
-        /*
             case "chrome":
                 WebDriverManager.chromedriver().setup();
                 ChromeOptions chromeOptions = new ChromeOptions();
-                if (Boolean.parseBoolean(config.getProperty("headless", "false"))) {
-                    chromeOptions.addArguments("--headless");
-                }
+                
+                // Headless mode for Jenkins
+                chromeOptions.addArguments("--headless=new");
+                chromeOptions.addArguments("--no-sandbox");
+                chromeOptions.addArguments("--disable-dev-shm-usage");
+                chromeOptions.addArguments("--disable-gpu");
+                chromeOptions.addArguments("--window-size=1920,1080");
                 chromeOptions.addArguments("--disable-notifications");
                 chromeOptions.addArguments("--start-maximized");
+                chromeOptions.addArguments("--disable-blink-features=AutomationControlled");
+                chromeOptions.addArguments("--disable-extensions");
+                chromeOptions.addArguments("--disable-popup-blocking");
+                
                 driver = new ChromeDriver(chromeOptions);
                 break;
-                */
-        case "chrome":
-            WebDriverManager.chromedriver().setup();
-            ChromeOptions chromeOptions = new ChromeOptions();
-
-            // Always add these for Jenkins (headless environment)
-            chromeOptions.addArguments("--no-sandbox");
-            chromeOptions.addArguments("--disable-dev-shm-usage");
-            chromeOptions.addArguments("--disable-gpu");
-            chromeOptions.addArguments("--window-size=1920,1080");
-
-            // Run headless mode automatically when running on Jenkins or CI
-            String headless = System.getenv("JENKINS_HOME") != null ? "true" : config.getProperty("headless", "false");
-            if (Boolean.parseBoolean(headless)) {
-                chromeOptions.addArguments("--headless=new");
-            }
-
-            chromeOptions.addArguments("--disable-notifications");
-            chromeOptions.addArguments("--start-maximized");
-
-            driver = new ChromeDriver(chromeOptions);
-            break;
-
 
             case "firefox":
                 WebDriverManager.firefoxdriver().setup();
@@ -109,13 +79,12 @@ public class BaseTest {
                 throw new IllegalArgumentException("Browser not supported: " + browser);
         }
 
-        // Configure driver
         driver.manage().window().maximize();
         driver.manage().timeouts().implicitlyWait(
-            Duration.ofSeconds(Long.parseLong(config.getProperty("implicit.wait", "10")))
+            Duration.ofSeconds(Long.parseLong(config.getProperty("implicit.wait", "15")))
         );
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
 
-        // Navigate to URL
         String url = config.getUrl();
         driver.get(url);
         test.log(Status.INFO, "Navigated to URL: " + url);
@@ -123,14 +92,10 @@ public class BaseTest {
         System.out.println("✓ Navigated to: " + url);
     }
 
-    /**
-     * Method level teardown - Handle test results and close browser
-     */
     @AfterMethod
     public void tearDown(ITestResult result) {
         String testName = result.getMethod().getMethodName();
 
-        // Check test status and log accordingly
         if (result.getStatus() == ITestResult.SUCCESS) {
             test.log(Status.PASS, "✓ Test PASSED: " + testName);
             System.out.println("✓ Test PASSED: " + testName);
@@ -141,7 +106,6 @@ public class BaseTest {
             System.out.println("✗ Test FAILED: " + testName);
             System.out.println("Reason: " + result.getThrowable().getMessage());
 
-            // Capture screenshot on failure
             String screenshotPath = ScreenshotUtil.captureScreenshot(driver, testName);
             if (screenshotPath != null) {
                 try {
@@ -158,7 +122,6 @@ public class BaseTest {
             System.out.println("⊘ Test SKIPPED: " + testName);
         }
 
-        // Close browser
         if (driver != null) {
             driver.quit();
             test.log(Status.INFO, "Browser closed");
@@ -168,9 +131,6 @@ public class BaseTest {
         System.out.println("----------------------------------------");
     }
 
-    /**
-     * Suite level teardown - Generate final report
-     */
     @AfterSuite
     public void tearDownSuite() {
         ExtentManager.flushReports();
