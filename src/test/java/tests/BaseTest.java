@@ -29,6 +29,7 @@ public class BaseTest {
         System.out.println("========================================");
     }
 
+    /*
     @BeforeMethod
     public void setUp(ITestResult result) {
         config = ConfigReader.getInstance();
@@ -92,6 +93,90 @@ public class BaseTest {
         System.out.println("✓ Navigated to: " + url);
     }
 
+    */
+    @BeforeMethod
+    public void setUp(ITestResult result) {
+        config = ConfigReader.getInstance();
+
+        String testName = result.getMethod().getMethodName();
+        String description = result.getMethod().getDescription();
+        test = ExtentManager.getInstance().createTest(testName, description);
+        ExtentManager.setTest(test);
+
+        test.log(Status.INFO, "Test execution started: " + testName);
+        System.out.println("\n▶ Starting Test: " + testName);
+
+        String browser = config.getBrowser().toLowerCase();
+        test.log(Status.INFO, "Opening browser: " + browser);
+
+        switch (browser) {
+            case "chrome":
+                WebDriverManager.chromedriver().setup();
+                ChromeOptions chromeOptions = new ChromeOptions();
+                
+                // Optimized options for Jenkins headless mode
+                chromeOptions.addArguments("--headless=new");
+                chromeOptions.addArguments("--no-sandbox");
+                chromeOptions.addArguments("--disable-dev-shm-usage");
+                chromeOptions.addArguments("--disable-gpu");
+                chromeOptions.addArguments("--window-size=1920,1080");
+                chromeOptions.addArguments("--disable-notifications");
+                chromeOptions.addArguments("--disable-popup-blocking");
+                chromeOptions.addArguments("--disable-blink-features=AutomationControlled");
+                chromeOptions.addArguments("--disable-extensions");
+                chromeOptions.addArguments("--disable-infobars");
+                chromeOptions.addArguments("--disable-web-security");
+                chromeOptions.addArguments("--allow-running-insecure-content");
+                chromeOptions.addArguments("--ignore-certificate-errors");
+                
+                // CRITICAL: Disable automation flags
+                chromeOptions.setExperimentalOption("excludeSwitches", 
+                    java.util.Arrays.asList("enable-automation"));
+                chromeOptions.setExperimentalOption("useAutomationExtension", false);
+                
+                driver = new ChromeDriver(chromeOptions);
+                break;
+
+            case "firefox":
+                WebDriverManager.firefoxdriver().setup();
+                driver = new FirefoxDriver();
+                break;
+
+            case "edge":
+                WebDriverManager.edgedriver().setup();
+                driver = new EdgeDriver();
+                break;
+
+            default:
+                test.log(Status.FAIL, "Unsupported browser: " + browser);
+                throw new IllegalArgumentException("Browser not supported: " + browser);
+        }
+
+        driver.manage().window().maximize();
+        
+        // Increased timeouts for Jenkins
+        driver.manage().timeouts().implicitlyWait(
+            Duration.ofSeconds(20)  // Increased from 15
+        );
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
+        driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
+
+        String url = config.getUrl();
+        driver.get(url);
+        
+        // Wait for page to fully load
+        try {
+            Thread.sleep(2000);  // Initial page load wait
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        test.log(Status.INFO, "Navigated to URL: " + url);
+        System.out.println("✓ Browser opened: " + browser);
+        System.out.println("✓ Navigated to: " + url);
+    }
+    
+    
     @AfterMethod
     public void tearDown(ITestResult result) {
         String testName = result.getMethod().getMethodName();

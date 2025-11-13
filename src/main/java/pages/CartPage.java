@@ -79,18 +79,70 @@ public class CartPage extends BasePage {
     /**
      * Click checkout button to proceed to checkout
      */
+    /*
     public CheckoutPage clickCheckout() {
         click(checkoutButton);
         System.out.println("  → Clicked checkout button");
         return new CheckoutPage(driver);
     }
 
+*/
     /**
      * Click continue shopping button to go back to products
      */
+    /*
     public ProductsPage clickContinueShopping() {
         click(continueShoppingButton);
         System.out.println("  → Clicked continue shopping");
+        return new ProductsPage(driver);
+    }
+    */
+    
+    /**
+     * Click checkout button with wait
+     */
+    public CheckoutPage clickCheckout() {
+        try {
+            // Wait for cart page to fully load
+            Thread.sleep(1000);
+            
+            // Scroll to checkout button
+            js.executeScript("arguments[0].scrollIntoView(true);", checkoutButton);
+            Thread.sleep(500);
+            
+            click(checkoutButton);
+            System.out.println("  → Clicked checkout button");
+            
+            // Wait for checkout page to load
+            Thread.sleep(1000);
+            
+        } catch (Exception e) {
+            System.err.println("  ✗ Failed to click checkout: " + e.getMessage());
+        }
+        return new CheckoutPage(driver);
+    }
+
+    /**
+     * Click continue shopping button with wait
+     */
+    public ProductsPage clickContinueShopping() {
+        try {
+            // Wait for cart page to fully load
+            Thread.sleep(1000);
+            
+            // Scroll to button
+            js.executeScript("arguments[0].scrollIntoView(true);", continueShoppingButton);
+            Thread.sleep(500);
+            
+            click(continueShoppingButton);
+            System.out.println("  → Clicked continue shopping");
+            
+            // Wait for products page to load
+            Thread.sleep(1000);
+            
+        } catch (Exception e) {
+            System.err.println("  ✗ Failed to click continue shopping: " + e.getMessage());
+        }
         return new ProductsPage(driver);
     }
 

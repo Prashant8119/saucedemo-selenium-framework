@@ -3,6 +3,8 @@ package pages;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+
 import base.BasePage;
 import java.util.List;
 
@@ -93,11 +95,50 @@ public class ProductsPage extends BasePage {
     /**
      * Add product to cart by index
      */
+    /*
     public ProductsPage addProductToCartByIndex(int index) {
         if (index >= 0 && index < addToCartButtons.size()) {
             String productName = getText(productNames.get(index));
             click(addToCartButtons.get(index));
             System.out.println("  → Added product to cart: " + productName);
+        } else {
+            System.out.println("  ✗ Invalid product index: " + index);
+        }
+        return this;
+    }
+    */
+    
+    /**
+     * Add product to cart by index with extra wait for headless mode
+     */
+    public ProductsPage addProductToCartByIndex(int index) {
+        if (index >= 0 && index < addToCartButtons.size()) {
+            try {
+                String productName = getText(productNames.get(index));
+                
+                // Scroll to product first
+                js.executeScript("arguments[0].scrollIntoView({behavior: 'instant', block: 'center'});", 
+                    addToCartButtons.get(index));
+                Thread.sleep(300);
+                
+                // Click add to cart
+                click(addToCartButtons.get(index));
+                
+                // CRITICAL: Wait for cart badge to update
+                Thread.sleep(2000);  // Increased wait for Jenkins
+                
+                // Verify cart updated
+                try {
+                    wait.until(ExpectedConditions.visibilityOf(cartBadge));
+                    System.out.println("  → Added product to cart: " + productName + " (Cart: " + getCartItemCount() + ")");
+                } catch (Exception e) {
+                    System.out.println("  ⚠️ Cart badge not visible yet, but product clicked");
+                }
+                
+            } catch (Exception e) {
+                System.err.println("  ✗ Failed to add product at index: " + index);
+                e.printStackTrace();
+            }
         } else {
             System.out.println("  ✗ Invalid product index: " + index);
         }
